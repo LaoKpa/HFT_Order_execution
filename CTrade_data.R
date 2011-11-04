@@ -8,7 +8,7 @@ setClass("CTrade_data", representation(instruments = "character",
 				quotes		= "data.frame",	
 				orders = "data.frame",
 				signals = "data.frame",
-				current.time = "numeric",
+				current_time = "numeric",
 				file.path = "character"			
 		),
 		
@@ -17,7 +17,7 @@ setClass("CTrade_data", representation(instruments = "character",
 				quotes = data.frame(),
 				orders = data.frame(),
 				signals = data.frame(),
-				current.time = 0,
+				current_time = 0,
 				file.path	= character()				
 		)
 )
@@ -79,7 +79,7 @@ setMethod("calc.liquidity",
 			instr.liquidity <- c()			
 			for (i in 1:length(x@instruments)) {				
 #				
-				liquidity <- .calc.liquidity(x@trades, time, x@instruments[i], N1, N2)
+				liquidity <- .calc.liquidity(x, time, x@instruments[i], N1, N2)
 				
 				instr.liquidity <- cbind(instr.liquidity, liquidity)
 			}

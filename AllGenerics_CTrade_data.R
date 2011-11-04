@@ -7,8 +7,8 @@ setClass("CTrade_data", representation(instruments = "character",
 				trades   = "data.frame",
 				quotes	= "data.frame",	
 				orders = "data.frame",
-				signals = "data.frame",
-				current.time = "numeric",
+				signals = "data.frame",				
+				current_time = "numeric",
 				file.path = "character"								
 		),
 		
@@ -17,7 +17,7 @@ setClass("CTrade_data", representation(instruments = "character",
 				quotes = data.frame(),	
 				orders = data.frame(),
 				signals = data.frame(),
-				current.time = 0,
+				current_time = 0,
 				file.path	= character()				
 		)
 )

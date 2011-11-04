@@ -15,15 +15,15 @@ system.time(data <- data["10:00:50"])
 data@trades <- read.trades(data, 256, 50000)
 data@quotes <- read.quotes( data )
 
-trades <- data@trades[ data@trades[ "ID" ] == "SPY" & data@trades[ "trade.price" ] !=  0, ] 
-quotes <- data@quotes[ data@quotes[ "ID" ] == "SPY" & data@quotes[ "ask.price" ] !=  0 & data@quotes[ "bid.price" ] !=  0, ]
+trades <- data@trades[ data@trades[ "ID" ] == "QQQ" & data@trades[ "price" ] !=  0, ] 
+quotes <- data@quotes[ data@quotes[ "ID" ] == "QQQ" & data@quotes[ "ask" ] !=  0 & data@quotes[ "bid" ] !=  0, ]
 
-sign_trades = c(3, 4, 5)
+sign_trades = c(1, 3, 4)
 trades_numeric <- do.call( "cbind", lapply(sign_trades, function(k) as.numeric( trades[, k] )))
-colnames( trades_numeric ) <- c( "trade.price", "trade.size", "trade.time" )
-sign_quotes <-  c(3, 4, 6, 7, 8)
+colnames( trades_numeric ) <- c( "time", "price", "size" )
+sign_quotes <-  c(1, 3, 4, 5, 6)
 quotes_numeric <- do.call( "cbind", lapply(sign_quotes, function(k) as.numeric( quotes[, k] )))
-colnames( quotes_numeric ) <- c( "ask.price", "ask.size", "bid.price", "bid.size", "bid.time" )
+colnames( quotes_numeric ) <- c( "time", "ask", "ask_size", "bid", "bid_size" )
 
 number_to_plot = 100
 ymax <- max( quotes_numeric[ 1:number_to_plot, c("bid.price", "ask.price" )] ) 
@@ -89,7 +89,5 @@ z <- tickdata.test["13:46:47"]
 
 .plot( z, 300, instrument = "QQQ" )
 
-i <- 2:nrow( trades )
-price_change <- data.frame()
-price_change <- trades[ trades [ i, "price"] != trades[ i - 1, "price" ], ]
+therachold <- 100000
 

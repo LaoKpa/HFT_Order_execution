@@ -182,16 +182,10 @@
 	
 }
 
-.calc.liquidity <- function(data, time, instr,  N1, N2) {
+.calc.liquidity <- function(object, time, instr,  N1, N2) {
 	
-	trades <- data[ data[,"ID"] %in% instr, ]	
-	position <- which( time >= as.matrix( as.numeric( trades[ ,"time" ] ) ) )
-	if ( length( position ) == 0)
-		return ( 1 )
-	position <- last( position )
-	
-	## Crop unused data
-	trades <- trades[1:position,]	
+	trades <- .get_trades_data_befor_time( object, time, instr)
+	if ( nrow( trades) == 0) return ( 1 )
 	
 	price_triangles <- .get_price_triangles( trades, N1)	
 	average_spread <- mean(as.numeric( price_triangles ) )
@@ -204,7 +198,7 @@
 		N2 <- nrow( trades ) - 1
 	}
 	
-	duration <- as.numeric( trades[ nrow( trades ), "time"] ) - as.numeric( trades[ (nrow( trades ) - N2), "time"] )
+	duration <- as.numeric( trades[ nrow( trades ), "time"] ) - as.numeric( trades[ (nrow( trades ) - ( N2 - 1 )), "time"] )
 	if ( duration != 0 ) T <- sqrt( duration * 1000 )
 	else T <- 1
 	
@@ -240,5 +234,116 @@ price_triangle <- function( trades, k )
 .get_data <- function(data, start_time, stop_time)
 {	
 	if ( nrow(data) == 0) return ( invisible ( data.frame() ) )
-	return ( invisible ( data[ as.matrix( as.numeric( data[, "time"]) ) > start_time & as.matrix ( as.numeric( data[, "time"] ) ) < stop_time, ] ) ) 
+	return ( invisible ( data[ as.matrix( as.numeric( data[, "time"]) ) >= start_time & as.matrix ( as.numeric( data[, "time"] ) ) < stop_time, ] ) ) 
 }
+
+.get_trades_data_befor_time <- function( object, time, instr )
+{
+	trades <- object@trades[ object@trades[,"ID"] %in% instr, ]	
+	position <- which( time >= as.matrix( as.numeric( trades[ ,"time" ] ) ) )
+	if ( length( position ) == 0)
+		return ( data.frame() )
+	position <- last( position )
+	
+	## Crop unused data
+	trades <- trades[1:position,]	
+	
+	trades_numeric <- .data_to_numeric( trades )	
+	
+	return ( invisible ( trades_numeric ))
+}
+
+.get_quotes_data_befor_time <- function( object, time, instr )
+{
+	quotes <- object@quotes[ object@quotes[,"ID"] %in% instr, ]	
+	position <- which( time >= as.matrix( as.numeric( quotes[ ,"time" ] ) ) )
+	if ( length( position ) == 0)
+		return ( data.frame() )
+	position <- last( position )
+	
+	## Crop unused data
+	quotes <- quotes[1:position,]	
+	
+	quotes_numeric <- .data_to_numeric( quotes )	
+	
+	return ( invisible ( quotes_numeric ))
+}
+
+.get_data_befor_time <- function( object, time, instr )
+{
+	current_time <- time
+	seconds_in_a_minute <- 60
+	time <- time + seconds_in_a_minute
+	
+	trades <- object@trades[ object@trades[,"ID"] %in% instr, ]	
+	position <- which( time >= as.matrix( as.numeric( trades[ ,"time" ] ) ) )
+	if ( length( position ) == 0)
+	{
+		trades <-  data.frame()
+	}
+	position <- last( position )
+	
+	## Crop unused data
+	trades <- trades[1:position,]	
+	object@trades <- trades
+
+	quotes <- object@quotes[ object@quotes[,"ID"] %in% instr, ]	
+	position <- which( time >= as.matrix( as.numeric( quotes[ ,"time" ] ) ) )
+	if ( length( position ) == 0)
+	{
+		quotes <- data.frame()
+	}
+	position <- last( position )
+	
+	## Crop unused data
+	quotes <- quotes[1:position,]
+
+	object@quotes <- quotes
+	
+	object@current_time <- current_time
+	
+	return ( invisible ( object ))
+}
+
+.data_to_numeric <- function( data )
+{
+	if ( ncol( data ) == 5)
+	{
+		sign_trades = c(1, 3, 4)
+		trades_numeric <- do.call( "cbind", lapply(sign_trades, function(k) as.numeric( trades[, k] )))
+		colnames( trades_numeric ) <- c( "time", "price", "size" )
+	
+		return ( invisible ( trades_numeric ) )
+	}
+	
+	if ( ncol( data ) == 6 )
+	{
+		sign_quotes <-  c(1, 3, 4, 5, 6)
+		quotes_numeric <- do.call( "cbind", lapply(sign_quotes, function(k) as.numeric( quotes[, k] )))
+		colnames( quotes_numeric ) <- c( "time", "ask", "ask_size", "bid", "bid_size" )
+		return ( invisible ( quotes_numeric ))
+	}
+	
+	return ( invisible  ( data ) )
+}
+
+.median_filter <- function( data, window )
+{
+	filtered_data <- runmed( data[ length(data):1], k = window )
+	return ( invisible ( filtered_data[ length(filtered_data):1] ) )
+}
+
+.filtering_data <- function( x, window)
+{	
+	quotes <- x@quotes
+	
+	quotes_ask_median_filter <- .median_filter( quotes[ ,"ask"], window )
+	quotes_bid_median_filter <- .median_filter( quotes[ ,"bid"], window )
+	
+	quotes[,"ask"] <- quotes_ask_median_filter
+	quotes[,"bid"] <- quotes_bid_median_filter
+	
+	return ( invisible ( quotes ) )
+	
+}
+

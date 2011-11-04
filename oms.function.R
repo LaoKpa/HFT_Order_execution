@@ -6,7 +6,7 @@
 
 data.fun <- function(file.path = NULL )
 {
-	
+	require(xts)
 	## Create an empty current order book data frame
 	
 	empty.trade <- data.frame()
