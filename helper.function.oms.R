@@ -178,16 +178,17 @@
 	ymax <- max( quotes_numeric[ start_to_plot:stop_to_plot, c("bid", "ask" )] ) 
 	ymin <- min( quotes_numeric[ start_to_plot:stop_to_plot, c("bid", "ask" )] ) 
 	
-	plot( quotes_numeric[ start_to_plot:stop_to_plot, "time"], quotes_numeric[ start_to_plot:stop_to_plot, "ask"], type = "l", col = "red", ylim = c(ymin, ymax))
-	lines( quotes_numeric[ start_to_plot:stop_to_plot,"time"], quotes_numeric[ start_to_plot:stop_to_plot, "bid"], type = "l", col = "green")
+	plot( quotes_numeric[ start_to_plot:stop_to_plot, "time"], quotes_numeric[ start_to_plot:stop_to_plot, "ask"], type = "o", col = "red", ylim = c(ymin, ymax))
+	lines( quotes_numeric[ start_to_plot:stop_to_plot,"time"], quotes_numeric[ start_to_plot:stop_to_plot, "bid"], type = "o", col = "green")
 	
 	points( trades_numeric[ ,"time"], trades_numeric[ , "price"], type = "p", col = "blue", lwd = 3)
 	
 	if ( type == "filtered")
 	{
-		filtered_quotes <- .filtering_quotes( quotes, 19)		
-		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[ start_to_plot:stop_to_plot, "bid"], type = "l", col = "red", lwd = 3)
-		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[start_to_plot:stop_to_plot, "ask"], type = "l", col = "green", lwd = 3)
+		filtered_quotes <- .filtering_quotes( quotes, 19)
+		
+		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[ start_to_plot:stop_to_plot, "bid"], type = "l", col = "black", lwd = 2)
+		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[start_to_plot:stop_to_plot, "ask"], type = "l", col = "black", lwd = 2)
 	}
 	
 	if ( object@current_time != 0 ) abline( v = object@current_time, col = "dark blue" )
