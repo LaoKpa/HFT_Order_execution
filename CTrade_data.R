@@ -34,22 +34,6 @@ setMethod(
 		}
 )
 
-
-setMethod("[",
-		signature(x = "CTrade_data", i = "character"),
-		function(x, i){			
-			
-			start_time = .to.ms(i)
-			stop_time = start_time + 60
-			
-			x@trades <- .get_data( x@trades, start_time, stop_time )
-			x@quotes <- .get_data( x@quotes, start_time, stop_time )
-			x@orders<- .get_data( x@orders, start_time, stop_time )
-					
-			return(x)
-		}
-)
-
 setMethod("read.data",
 		signature(x = "CTrade_data"),
 		function( x, n ){
@@ -60,21 +44,42 @@ setMethod("read.data",
 		}
 )
 
+
+setMethod("[",
+		signature(x = "CTrade_data", i = "character"),
+		function(x, i){			
+			
+			start_time = .to.ms(i)
+			stop_time = start_time + 60
+			
+			x@current.time = start_time
+			x@trades <- .get_data( x@trades, start_time, stop_time )
+			x@quotes <- .get_data( x@quotes, start_time, stop_time )
+			x@orders<- .get_data( x@orders, start_time, stop_time )
+			x@signals <- .get_data( x@signals, start_time, stop_time )
+			
+			return(x)
+		}
+)
+
 setMethod("calc.liquidity",
 		signature(x = "CTrade_data"),
-		function(x, N1, N2){	
+		function(x, time, N1, N2){	
 			
 			cat("~~~ calc.liqudury: start ~~~~~~~~~~~~\n")
 			cat("Parameters:\n")
 			cat("N1 = ", N1, "\n")
 			cat("N2 = ", N2, "\n")
 			
-			instr.liquidity <- c()
-			
-			for (i in 1:length(x@instruments)) {
-				
-#				print(x@instruments[i])
-				liquidity <- .calc.liquidity(x, x@instruments[i], N1, N2, thresholds = list(spread.price = 0.05, spread.sd = 0.05, spread.ma = 0.1))
+			if ( is.character( time ) )
+			{
+				time = .to.ms( time )
+			}			
+		
+			instr.liquidity <- c()			
+			for (i in 1:length(x@instruments)) {				
+#				
+				liquidity <- .calc.liquidity(x@trades, time, x@instruments[i], N1, N2)
 				
 				instr.liquidity <- cbind(instr.liquidity, liquidity)
 			}

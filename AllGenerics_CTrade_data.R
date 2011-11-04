@@ -22,11 +22,9 @@ setClass("CTrade_data", representation(instruments = "character",
 		)
 )
 
-
-
 setGeneric("read.data", function( x, n ) standardGeneric("read.data"))
 
-setGeneric("calc.liquidity", function( x, N1, N2) standardGeneric("calc.liquidity"))
+setGeneric("calc.liquidity", function( x, time, N1, N2) standardGeneric("calc.liquidity"))
 
 setGeneric("quantile.liquidity", function(x, N1, N2, step) standardGeneric("quantile.liquidity"))
 

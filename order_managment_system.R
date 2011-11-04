@@ -85,5 +85,11 @@ tickdata <- data.fun( path )
 
 tickdata.test <- read.data( tickdata, -1 )
 
+z <- tickdata.test["13:46:47"]
 
+.plot( z, 300, instrument = "QQQ" )
+
+i <- 2:nrow( trades )
+price_change <- data.frame()
+price_change <- trades[ trades [ i, "price"] != trades[ i - 1, "price" ], ]
 

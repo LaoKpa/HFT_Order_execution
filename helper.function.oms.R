@@ -182,80 +182,63 @@
 	
 }
 
-.calc.liquidity <- function(x, instr,  N1, N2, thresholds) {
+.calc.liquidity <- function(data, time, instr,  N1, N2) {
 	
-	trades <- x@trades[x@trades[,"ID"] %in% instr,]
-	quotes <- x@quotes[x@quotes[,"ID"] %in% instr,]
-	
-	## Check valididty of parameters N1 and N2
-	N2 <- min(nrow(trades), N2)
-	N1 <- min(N2, N1)
+	trades <- data[ data[,"ID"] %in% instr, ]	
+	position <- which( time >= as.matrix( as.numeric( trades[ ,"time" ] ) ) )
+	if ( length( position ) == 0)
+		return ( 1 )
+	position <- last( position )
 	
 	## Crop unused data
-	trades <- trades[1:N2,]
+	trades <- trades[1:position,]	
 	
-	# sd <- sd(as.numeric(trades[, "trade.price"]))
+	price_triangles <- .get_price_triangles( trades, N1)	
+	average_spread <- mean(as.numeric( price_triangles ) )
+	sigma_price <- sqrt(sum( price_triangles^2))
 	
-	sd.another <- c()
-	for (k in nrow(trades):3) {
-		sd.another <- rbind(sd.another, isPriceChange(k, trades))
+	current_price <- as.numeric( last ( trades[, "price"]))	
+	
+	if ( nrow( trades ) <= N2 )
+	{
+		N2 <- nrow( trades ) - 1
 	}
-	#sd.another <- do.call("rbind", lapply(k = 3:nrow(trades), FUN = isPriceChange(k, trades)))
 	
-	mean <- mean(as.numeric(trades[, "trade.size"]))
+	duration <- as.numeric( trades[ nrow( trades ), "time"] ) - as.numeric( trades[ (nrow( trades ) - N2), "time"] )
+	if ( duration != 0 ) T <- sqrt( duration * 1000 )
+	else T <- 1
 	
-	price <- as.numeric(last(trades[, "trade.price"]))
+	average_trade_vol <- mean( as.numeric( trades[ ( nrow( trades ) - N2):( nrow( trades ) ), "size"] ) )
 	
-	spread.ma <- mean(sd.another)
+	factor1 = average_spread / current_price;
+	factor2 = average_trade_vol / sigma_price;
+	result =  ( factor2 / factor1 ) / T;
+	if ( result < 1 ) result = 1;	
 	
-	sd = sqrt(sum(sd.another^2))
-	
-	tick.sigma <<- rbind(tick.sigma, cbind(instr, sd)) 
-#	spread.sum <- 0
-#	empty <- 0
-#	for (i in 1:N1) {
-#		
-#		position <- which(as.numeric(quotes[, "bid.time"]) < as.numeric(trades[i, "trade.time"]))
-#		if (!identical(position, integer(0))) {
-#			quote <- quotes[first(position), ]
-#		} else 	quote <- quotes[1,]
-#		
-#				
-#		spread <- abs(as.numeric(quote[, "ask.price"]) - as.numeric(quote[, "bid.price"]))
-#		
-#		if ((spread / price) > thresholds$spread.price) {  
-#			empty <- empty + 1
-#			next
-#		}
-#		else 
-#			spread.sum <- spread.sum + spread
-#	}
-#	spread.ma <- spread.sum / (N1 - empty)
-#	
-#	if (spread.ma == Inf) return (-1)
-#	
-#	if (sd == 0) sd <- sd + thresholds$spread.ma * spread.ma
-#	if (spread.ma == 0) spread.ma <- sd / thresholds$spread.ma	
-#	if (sd < thresholds$spread.sd * spread.ma) sd <- sd + thresholds$spread.ma * spread.ma
-	
-	T <- sqrt(as.numeric(first(trades[, "trade.time"])) - as.numeric(last(trades[, "trade.time"])))
-	
-	factor2 <- mean / sd
-	factor1 <- spread.ma / price
-	factor <- factor2 / (factor1 * T)
-	#	cat(instr, " : ", spread.sum, " ", factor1, "\n")
-	
-	return (factor)	
+	return (result)	
 }
 
-isPriceChange <- function(k, trades)
+.get_price_triangles <- function( trades, N )
 {
-	change <- (as.numeric(trades[k , "trade.price"]) - as.numeric(trades[(k - 1), "trade.price"])) *
-			(as.numeric(trades[(k - 1), "trade.price"]) - as.numeric(trades[(k - 2), "trade.price"]))
-	if (change < 0) invisible (abs(as.numeric(trades[k , "trade.price"]) - as.numeric(trades[(k - 1), "trade.price"])))
+	triangles <- data.frame()
+	i <- 2:nrow( trades )
+	price_change <- trades[ trades [ i, "price"] != trades[ i - 1, "price" ], ]	
+	for (k in nrow( price_change ):3) {
+		triangles <- rbind( triangles, price_triangle(price_change, k))		
+	}
+	if ( nrow( triangles ) < N ) N <- nrow( triangles )
+	return ( invisible ( triangles[ 1:N, ] ) )
+}
+
+price_triangle <- function( trades, k )
+{	
+	change <- (as.numeric(trades[k , "price"]) - as.numeric(trades[(k - 1), "price"])) *
+			(as.numeric(trades[(k - 1), "price"]) - as.numeric(trades[(k - 2), "price"]))
+	if (change < 0) invisible (abs(as.numeric(trades[k , "price"]) - as.numeric(trades[(k - 1), "price"])))
 }
 
 .get_data <- function(data, start_time, stop_time)
 {	
+	if ( nrow(data) == 0) return ( invisible ( data.frame() ) )
 	return ( invisible ( data[ as.matrix( as.numeric( data[, "time"]) ) > start_time & as.matrix ( as.numeric( data[, "time"] ) ) < stop_time, ] ) ) 
 }
