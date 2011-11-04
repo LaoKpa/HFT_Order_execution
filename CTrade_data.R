@@ -49,16 +49,35 @@ setMethod("[",
 		signature(x = "CTrade_data", i = "character"),
 		function(x, i){			
 			
-			start_time = .to.ms(i)
-			stop_time = start_time + 60
+			i_to_list <- strsplit( i, split = "::")[[1]]
+			if ( length( i_to_list ) == 2)
+			{
+				if ( i[ 1] != "") 
+				{
+					start_time = .to.ms( i[ 1 ] )
+				}
+				else 
+				{
+					start_time = 1					
+				}
+				stop_time = .to.ms( i[ 2 ] )				
+			}
 			
-			x@current.time = start_time
+			if ( length( i_to_list ) == 1)
+			{
+				start_time = 1				
+				stop_time = .to.ms( i[ 1 ] ) + 60
+				x@current_time = .to.ms( i[ 1 ] )
+			}			
+			
+			print( start_time) 
+			print( stop_time )
 			x@trades <- .get_data( x@trades, start_time, stop_time )
 			x@quotes <- .get_data( x@quotes, start_time, stop_time )
 			x@orders<- .get_data( x@orders, start_time, stop_time )
 			x@signals <- .get_data( x@signals, start_time, stop_time )
 			
-			return(x)
+			return( x )
 		}
 )
 
@@ -93,57 +112,21 @@ setMethod("calc.liquidity",
 		}
 )
 
-setMethod("quantile.liquidity",
-		signature(x = "CTrade_data"),
-		function(x, N1, N2, step) {	
-			
-			if (x@file.trades.index == 1) invisible(x)
-			
-			x@trades <- read.trades(x, N2, step)
-			
-			x@quotes <- read.quotes(x)
-			
-			x@instr.liquidity <- calc.liquidity(x, N1, N2)
-			
-			invisible(x)
-		}
-)
-
 setMethod("show",
 		signature(object = "CTrade_data"),
 		function(object) {
 			
 			cat("~~~ Show class CTrade_data: start... \n")
-			cat("Trade File : "); print(object@file.trades)
-			cat("quotes File : "); print(object@file.quotes)	
+			cat("Data File : "); print(object@file.path)				
 			cat("Instruments : "); print(object@instruments)
-			cat("Current time = "); print(object@current.time)
-			cat("Trade file index = "); print(object@file.trades.index)
+			cat("Current time = "); print(object@current_time)
+			
 			cat("Trade data length = "); print(nrow(object@trades))
-			cat("quotes data length = "); print(nrow(object@quotes))
-			cat("Liquidity : "); print(object@instr.liquidity)
+			cat("Quotes data length = "); print(nrow(object@quotes))
+			cat("Orders data length = "); print(nrow(object@orders))
+			cat("Signals data length = "); print(nrow(object@signals))
+			
 			cat("~~~ Show class CTrade_data: end. \n")
 		}
 )
-
-setMethod("make_data_feed",
-		signature(x = "CTrade_data"),
-		function(x) {
-			
-			.make_data_feed(x)
-		}
-)
-## Next trade is easy to write using past calculated data. 
-
-#setMethod("next.trade",
-#		signature(object = "quotes"),
-#		function(object){
-#			## .get.next.trade finds the next trade
-#			
-#			n <- .get.next.trade(object@file, object@file.index, object@instrument, type = "[T]")
-#			
-#			invisible(read.orders(object, n))
-#		}
-#)
-
 

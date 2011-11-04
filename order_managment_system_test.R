@@ -83,9 +83,9 @@ path = "D://DB//Quotes//dfast_trader_1.log"
 
 tickdata <- data.fun( path ) 
 
-tickdata.test <- read.data( tickdata, -1 )
+tickdata <- read.data( tickdata, 1000000 )
 
-z <- tickdata.test["13:46:47"]
+z <- tickdata["13:46:47"]
 
 .plot( z, 300, instrument = "QQQ" )
 

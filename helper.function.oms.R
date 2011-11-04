@@ -129,8 +129,8 @@
 	
 }
 
-.plot <- function( object , n = 100, type = "", instrument)
-{	
+.plot <- function( object , n = 100, type = "filtered", instrument)
+{		
 	if ( n <= 0 ) 
 	{
 		cat("n is les then zero. Set to 100.\n")
@@ -150,27 +150,47 @@
 	
 	if ( nrow( quotes ) < n ) 
 	{
-		number_to_plot = nrow( quotes)
+		start_to_plot <-  1
+		stop_to_plot <-  nrow( quotes )
+	} else 
+	{
+		start_to_plot <-  nrow( quotes ) - ( n - 1 ) 
+		stop_to_plot <-  nrow( quotes )
 	}
-	else number_to_plot = n
 	
-	sign_trades = c( 1, 3, 4 )
-	trades_numeric <- do.call( "cbind", lapply(sign_trades, function(k) as.numeric( trades[, k] )))
-	colnames( trades_numeric ) <- c( "time", "price", "size" )
-	sign_quotes <-  c( 1, 3, 4, 5, 6 )
-	quotes_numeric <- do.call( "cbind", lapply(sign_quotes, function(k) as.numeric( quotes[, k] )))
-	colnames( quotes_numeric ) <- c( "time", "bid", "bid_size", "ask", "ask_size" )
+	if ( object@current_time != 0 )
+	{
+		position <- which( object@current_time >= as.matrix( as.numeric( quotes[ ,"time" ] ) ) )
+		if ( length( position ) != 0 )	
+		{
+			position <- last( position )
+			start_to_plot <-  position - n
+			if ( position < 1) start_to_plot <- 1
+			
+			stop_to_plot <-  position + n
+			if ( position > nrow( quotes ) ) stop_to_plot <- nrow( quotes )
+		}
+	}	
 
-	ymax <- max( quotes_numeric[ 1:number_to_plot, c("bid", "ask" )] ) 
-	ymin <- min( quotes_numeric[ 1:number_to_plot, c("bid", "ask" )] ) 
+	trades_numeric <- .data_to_numeric( trades )
+	quotes_numeric <- .data_to_numeric( quotes )	
+
+	ymax <- max( quotes_numeric[ start_to_plot:stop_to_plot, c("bid", "ask" )] ) 
+	ymin <- min( quotes_numeric[ start_to_plot:stop_to_plot, c("bid", "ask" )] ) 
 	
-	plot( quotes_numeric[ 1:number_to_plot, "time"], quotes_numeric[ 1:number_to_plot, "ask"], type = "l", col = "red", ylim = c(ymin, ymax))
-	lines( quotes_numeric[ 1:number_to_plot,"time"], quotes_numeric[ 1:number_to_plot, "bid"], type = "l", col = "green")
+	plot( quotes_numeric[ start_to_plot:stop_to_plot, "time"], quotes_numeric[ start_to_plot:stop_to_plot, "ask"], type = "l", col = "red", ylim = c(ymin, ymax))
+	lines( quotes_numeric[ start_to_plot:stop_to_plot,"time"], quotes_numeric[ start_to_plot:stop_to_plot, "bid"], type = "l", col = "green")
 	
 	points( trades_numeric[ ,"time"], trades_numeric[ , "price"], type = "p", col = "blue", lwd = 3)
 	
-#	plot( quotes_numeric[ 1:number_to_plot, "ask"], type = "l", col = "red", ylim = c(ymin, ymax))
-#	lines( quotes_numeric[ 1:number_to_plot, "bid"], type = "l", col = "green")	
+	if ( type == "filtered")
+	{
+		filtered_quotes <- .filtering_quotes( quotes, 19)		
+		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[ start_to_plot:stop_to_plot, "bid"], type = "l", col = "red", lwd = 3)
+		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[start_to_plot:stop_to_plot, "ask"], type = "l", col = "green", lwd = 3)
+	}
+	
+	if ( object@current_time != 0 ) abline( v = object@current_time, col = "dark blue" )
 }
 
 ## Conver ms to time format HH::MM::SS !!!! without ms !!!!
@@ -333,9 +353,9 @@ price_triangle <- function( trades, k )
 	return ( invisible ( filtered_data[ length(filtered_data):1] ) )
 }
 
-.filtering_data <- function( x, window)
+.filtering_quotes <- function( x, window)
 {	
-	quotes <- x@quotes
+	quotes <- x
 	
 	quotes_ask_median_filter <- .median_filter( quotes[ ,"ask"], window )
 	quotes_bid_median_filter <- .median_filter( quotes[ ,"bid"], window )
