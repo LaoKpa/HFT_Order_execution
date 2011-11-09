@@ -27,11 +27,13 @@ setMethod(
 
 setMethod( "make_trade",
 		signature( object = "OMS"),
-		function( object, i, instrument)
+		function( object, i, instrument, price_change, data_depth)
 		{
 			data <- tick_data[ i ]
 			
+			data_liquidity <- .calc.liquidity(object, data@current_time, instrument,  price_change, data_depth)
 			
+			filtered_quotes <- .filtering_data( object, 19)
 			
 			
 		}

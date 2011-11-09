@@ -129,7 +129,7 @@
 	
 }
 
-.plot <- function( object , n = 100, type = "filtered", instrument)
+.plot <- function( object , n = 100, type = "filtered", instrument, window = 7)
 {		
 	if ( n <= 0 ) 
 	{
@@ -185,7 +185,7 @@
 	
 	if ( type == "filtered")
 	{
-		filtered_quotes <- .filtering_quotes( quotes, 19)
+		filtered_quotes <- .filtering_quotes( quotes_numeric, window)	
 		
 		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[ start_to_plot:stop_to_plot, "bid"], type = "l", col = "black", lwd = 2)
 		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[start_to_plot:stop_to_plot, "ask"], type = "l", col = "black", lwd = 2)
@@ -331,7 +331,7 @@ price_triangle <- function( trades, k )
 	if ( ncol( data ) == 5)
 	{
 		sign_trades = c(1, 3, 4)
-		trades_numeric <- do.call( "cbind", lapply(sign_trades, function(k) as.numeric( trades[, k] )))
+		trades_numeric <- do.call( "cbind", lapply(sign_trades, function(k) as.numeric( data[, k] )))
 		colnames( trades_numeric ) <- c( "time", "price", "size" )
 	
 		return ( invisible ( trades_numeric ) )
@@ -340,7 +340,7 @@ price_triangle <- function( trades, k )
 	if ( ncol( data ) == 6 )
 	{
 		sign_quotes <-  c(1, 3, 4, 5, 6)
-		quotes_numeric <- do.call( "cbind", lapply(sign_quotes, function(k) as.numeric( quotes[, k] )))
+		quotes_numeric <- do.call( "cbind", lapply(sign_quotes, function(k) as.numeric( data[, k] )))
 		colnames( quotes_numeric ) <- c( "time", "ask", "ask_size", "bid", "bid_size" )
 		return ( invisible ( quotes_numeric ))
 	}
@@ -350,7 +350,7 @@ price_triangle <- function( trades, k )
 
 .median_filter <- function( data, window )
 {
-	filtered_data <- runmed( data[ length(data):1], k = window )
+	filtered_data <- runmed( data[ length(data):1], k = window,  endrule = "constant")
 	return ( invisible ( filtered_data[ length(filtered_data):1] ) )
 }
 
@@ -367,4 +367,3 @@ price_triangle <- function( trades, k )
 	return ( invisible ( quotes ) )
 	
 }
-
