@@ -197,6 +197,7 @@
 ## Conver ms to time format HH::MM::SS !!!! without ms !!!!
 .to.time <- function(x)
 {	
+	x <- as.numeric( x )
 	x <- as.POSIXct(x - 10800, origin = Sys.Date())
 	
 	return(format(x, format = "%H:%M:%S"))

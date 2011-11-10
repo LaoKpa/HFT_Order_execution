@@ -17,7 +17,7 @@ data.fun <- function(file.path = NULL )
 	
 	stopifnot(isOpen(obfile, "r"))
 	
-	close(obfile)
+	close( obfile )
 	
 	## Return a new quotes object.
 	

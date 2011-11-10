@@ -125,6 +125,8 @@ setMethod("show",
 			cat("Quotes data length = "); print(nrow(object@quotes))
 			cat("Orders data length = "); print(nrow(object@orders))
 			cat("Signals data length = "); print(nrow(object@signals))
+			cat("Start time  = "); cat( .to.time( first( object@quotes[,"time"]) ), "(", first( object@quotes[,"time"]), ")\n" )
+			cat("Start time  = "); cat( .to.time( last( object@quotes[,"time"]) ), "(", last( object@quotes[,"time"]), ")\n" )
 			
 			cat("~~~ Show class CTrade_data: end. \n")
 		}

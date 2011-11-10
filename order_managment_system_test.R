@@ -79,11 +79,11 @@ lines( quotes_bid_median_filter[ start_to_plot:number_to_plot ], type = "l", col
 ########################################
 ############ New class with filtering
 ########################################
-path = "D://DB//Quotes//dfast_trader_1.log"
+path = "E://Projects//DB//dfast_trader_1.log"
 
 tickdata <- data.fun( path ) 
 
-tickdata <- read.data( tickdata, 1000000 )
+tickdata <- read.data( tickdata, 200000 )
 
 z <- tickdata["13:46:47"]
 
