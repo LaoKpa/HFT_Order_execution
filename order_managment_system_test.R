@@ -17,14 +17,16 @@ therashold <- 100000
 
 oms <- new(Class = "OMS", tick_data = tickdata)
 
+ins <- "IWF"
 make_trade( object = oms,
 		time = "13:50:00",
-		instrument = "QQQ", 
+		instrument = ins, 
 		price_change = 64, 
 		data_depth = 256, 
 		filter_window = 19, 
 		latency = 0, 
-		av_depth = 25, 
+		av_depth_time = 2, 
 		spread_sensitivity = 4, 
 		side = 1)
-		
+
+.plot( data, instrument = ins)

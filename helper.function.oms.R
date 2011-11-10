@@ -150,36 +150,28 @@
 	
 	if ( nrow( quotes ) < n ) 
 	{
-		start_to_plot <-  1
-		stop_to_plot <-  nrow( quotes )
+		quotes_to_plot <- quotes
 	} else 
 	{
 		start_to_plot <-  nrow( quotes ) - ( n - 1 ) 
 		stop_to_plot <-  nrow( quotes )
+		quotes_to_plot <- quotes[ start_to_plot:stop_to_plot,]
 	}
 	
 	if ( object@current_time != 0 )
 	{
-		position <- which( object@current_time >= as.matrix( as.numeric( quotes[ ,"time" ] ) ) )
-		if ( length( position ) != 0 )	
-		{
-			position <- last( position )
-			start_to_plot <-  position - n
-			if ( position < 1) start_to_plot <- 1
-			
-			stop_to_plot <-  position + n
-			if ( position > nrow( quotes ) ) stop_to_plot <- nrow( quotes )
-		}
+		quotes_to_plot <- quotes[ quotes[ ,"time"] >=  object@current_time - n/10 & quotes[ ,"time"] < object@current_time + n/10, ]
+		if ( nrow( quotes_to_plot) == 0 ) stop(" bad time to data")
 	}	
 
 	trades_numeric <- .data_to_numeric( trades )
-	quotes_numeric <- .data_to_numeric( quotes )	
+	quotes_numeric <- .data_to_numeric( quotes_to_plot )	
 
-	ymax <- max( quotes_numeric[ start_to_plot:stop_to_plot, c("bid", "ask" )] ) 
-	ymin <- min( quotes_numeric[ start_to_plot:stop_to_plot, c("bid", "ask" )] ) 
+	ymax <- mean( quotes_numeric[ , "ask"] ) + sd( quotes_numeric[ , "ask"] ) 
+	ymin <- mean( quotes_numeric[ , "bid"] ) - sd( quotes_numeric[ , "bid"] )
 	
-	plot( quotes_numeric[ start_to_plot:stop_to_plot, "time"], quotes_numeric[ start_to_plot:stop_to_plot, "ask"], type = "o", col = "red", ylim = c(ymin, ymax))
-	lines( quotes_numeric[ start_to_plot:stop_to_plot,"time"], quotes_numeric[ start_to_plot:stop_to_plot, "bid"], type = "o", col = "green")
+	plot( quotes_numeric[ , "time"], quotes_numeric[ , "ask"], type = "o", col = "green", ylim = c(ymin, ymax))
+	lines( quotes_numeric[ ,"time"], quotes_numeric[ , "bid"], type = "o", col = "red")
 	
 	points( trades_numeric[ ,"time"], trades_numeric[ , "price"], type = "p", col = "blue", lwd = 3)
 	
@@ -187,8 +179,8 @@
 	{
 		filtered_quotes <- .filtering_quotes( quotes_numeric, window)	
 		
-		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[ start_to_plot:stop_to_plot, "bid"], type = "l", col = "black", lwd = 2)
-		lines( filtered_quotes[ start_to_plot:stop_to_plot,"time"], filtered_quotes[start_to_plot:stop_to_plot, "ask"], type = "l", col = "black", lwd = 2)
+		lines( filtered_quotes[ ,"time"], filtered_quotes[ , "bid"], type = "l", col = "black", lwd = 2)
+		lines( filtered_quotes[ ,"time"], filtered_quotes[, "ask"], type = "l", col = "black", lwd = 2)
 	}
 	
 	if ( object@current_time != 0 ) abline( v = object@current_time, col = "dark blue" )
@@ -271,7 +263,7 @@ price_triangle <- function( trades, k )
 	
 	## Crop unused data
 	trades <- trades[1:position,]	
-	trades <- object@trades[ object@trades[ ,"price" ] !=  0, ]	
+	trades <- trades[ trades[ ,"price" ] !=  0, ]	
 	
 	trades_numeric <- .data_to_numeric( trades )	
 	
@@ -349,7 +341,7 @@ price_triangle <- function( trades, k )
 	{
 		sign_quotes <-  c(1, 3, 4, 5, 6)
 		quotes_numeric <- do.call( "cbind", lapply(sign_quotes, function(k) as.numeric( data[, k] )))
-		colnames( quotes_numeric ) <- c( "time", "ask", "ask_size", "bid", "bid_size" )
+		colnames( quotes_numeric ) <- c( "time", "bid", "bid_size", "ask", "ask_size" )
 		return ( invisible ( quotes_numeric ))
 	}
 	
@@ -376,7 +368,7 @@ price_triangle <- function( trades, k )
 	
 }
 
-.get_price <- function( data, instrument, latency, filter_window, av_depth, spread_sensitivity, side )
+.get_price <- function( data, instrument, latency, filter_window, av_depth_time, spread_sensitivity, side )
 {	
 	pretrade_quotes <- .get_quotes_data_befor_time( data, data@current_time, instrument, latency )
 	pretrade_trades <- .get_trades_data_befor_time( data, data@current_time, instrument, latency )
@@ -385,45 +377,55 @@ price_triangle <- function( trades, k )
 	
 	pretrade_filtered_quotes <- .filtering_quotes( pretrade_quotes, filter_window)
 	
-	average_window <- ( nrow( pretrade_filtered_quotes ) - 24 ):nrow( pretrade_filtered_quotes )
-	average_spread <- mean( pretrade_filtered_quotes[ average_window, "ask"] - pretrade_filtered_quotes[ average_window, "bid"], )	
-	average_bid <- mean( pretrade_filtered_quotes[ average_window, "bid"])
-	average_ask <- mean( pretrade_filtered_quotes[ average_window, "ask"])
-	current_ask <- last( pretrade_quotes[,"ask"])
-	current_bid <- last( pretrade_quotes[,"bid"])
+	data_to_average <- pretrade_filtered_quotes[ pretrade_filtered_quotes[ ,"time"] >= ( data@current_time - av_depth_time), ]
+	data_to_average <- data_to_average[ -c( ( nrow( data_to_average ) - filter_window %/% 2 + 1 ):nrow( data_to_average ) ), ]
+#	average_window <- ( nrow( pretrade_filtered_quotes ) - av_depth ):( nrow( pretrade_filtered_quotes) - filter_window %/% 2 + 1 ) 
+	average_spread <- mean( data_to_average[ , "ask"] - data_to_average[ , "bid"])	
+	average_bid <- mean( data_to_average[ , "bid"])
+	average_ask <- mean( data_to_average[ , "ask"])
+	current_ask <- last( data_to_average[,"ask"])
+	current_bid <- last( data_to_average[,"bid"])
 	
-	if ( ( current_ask - current_bid ) > average_spread * spread_sensitivity )
+	cat( "average_spread: =" , average_spread, "\n")
+	cat( "average_bid: =", average_bid, "\n")
+	cat( "current bid: =" , current_bid, "\n")
+	cat( "average_ask: =", average_ask, "\n")
+	cat( "current ask: =", current_ask, "\n")	
+
+	if ( current_ask == average_ask )
 	{
-		if ( current_ask == average_ask )
+		ask = average_ask
+		bid = ask - round( average_spread, 2 )
+	} else		
+		if ( current_bid == average_bid )
 		{
-			ask = average_ask
-			bid = ask - average_spread
-		} else		
-			if ( current_bid == average_bid )
+			bid = current_bid
+			ask = bid + round( average_spread, 2 )
+		} else
+		{
+			current_real_ask <- last( pretrade_quotes[,"ask"])
+			current_real_bid <- last( pretrade_quotes[,"bid"])	
+			
+			last_trade <- last( pretrade_trades[,"price"])
+			
+			trade_ask <- current_real_ask - last_trade
+			trade_bid <- last_trade - current_real_bid
+			if( trade_ask < trade_bid )
 			{
-				bid = average_bid
-				ask = bid + average_spread
+				ask <-  last_trade
+				bid <-  last_trade - round( average_spread )
 			} else
-			{
-				last_trade <- last( pretrade_trades["price"])
-				trade_ask <- ask - trade
-				trade_bid <- trade - bid
-				if( trade_ask < trdae_bid)
+				if( trade_ask < trade_bid )
 				{
-					ask <-  last_trade
-					bid <-  last_trade - average_spread
+					bid <- last_trade 
+					ask <- bid + round( average_spread )
 				} else
-					if( trade_ask < trade_bid )
-					{
-						bid <- last_trade 
-						ask <- bid + average_spread
-					} else
-					{
-						ask <- last_trade + ( average_spread / 2 )
-						bid <- last_trade - ( average_spread / 2 )
-					}
-			}
+				{
+					ask <- last_trade + ( round( average_spread, 2 ) / 2 )
+					bid <- last_trade - ( round( average_spread, 2 ) / 2 )
+				}
 	}
+
 	
 	cat( "bid = ", bid, "ask = ", ask, "\n")
 	

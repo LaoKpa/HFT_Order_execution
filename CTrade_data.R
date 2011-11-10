@@ -70,9 +70,7 @@ setMethod("[",
 				x@current_time = .to.ms( i[ 1 ] )
 			}			
 			
-			if ( start_time > stop_time ) stop( "wrong time format!")
-			print( start_time) 
-			print( stop_time )
+			if ( start_time > stop_time ) stop( "wrong time format!")			
 			
 			x@trades <- .get_data( x@trades, start_time, stop_time )
 			x@quotes <- .get_data( x@quotes, start_time, stop_time )
@@ -128,7 +126,7 @@ setMethod("show",
 			cat("Orders data length = "); print(nrow(object@orders))
 			cat("Signals data length = "); print(nrow(object@signals))
 			cat("Start time  = "); cat( .to.time( first( object@quotes[,"time"]) ), "(", first( object@quotes[,"time"]), ")\n" )
-			cat("Start time  = "); cat( .to.time( last( object@quotes[,"time"]) ), "(", last( object@quotes[,"time"]), ")\n" )
+			cat("End time  = "); cat( .to.time( last( object@quotes[,"time"]) ), "(", last( object@quotes[,"time"]), ")\n" )
 			
 			cat("~~~ Show class CTrade_data: end. \n")
 		}

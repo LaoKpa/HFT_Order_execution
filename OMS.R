@@ -34,18 +34,20 @@ setMethod( "make_trade",
 				data_depth, 
 				filter_window, 
 				latency = 0, 
-				av_depth, 
+				av_depth_time, 
 				spread_sensitivity, 
 				side )
-		{			
+		{
+			cat( "~~~~~ OMS: make trade start...\n")
 			data <- object@tick_data[ time ]
 			
 			if ( data@current_time %% 60 != 0 ) stop( "time must multiply by minutes!")
 			
 			data_liquidity <- .calc.liquidity( data, data@current_time, instrument,  price_change, data_depth)		
 			
-			price <- .get_price( data, instrument, latency, filter_window, av_depth, spread_sensitivity, side )
+			price <- .get_price( data, instrument, latency, filter_window, av_depth_time, spread_sensitivity, side )
 			
+			cat( "~~~~~ OMS: make trade stop.\n")
 			return ( price )
 		}
 )
