@@ -8,6 +8,6 @@ setClass("OMS", representation(
 		),
 )
 
-setGeneric( "make_trade", function(object, i ) standardGeneric( "make_trade" ) )
+setGeneric( "make_trade", function( object, time, instrument, price_change, data_depth, filter_window, latency, av_depth, spread_sensitivity, side ) standardGeneric( "make_trade" ) )
 
 

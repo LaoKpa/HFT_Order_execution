@@ -27,14 +27,26 @@ setMethod(
 
 setMethod( "make_trade",
 		signature( object = "OMS"),
-		function( object, i, instrument, price_change, data_depth)
-		{
-			data <- tick_data[ i ]
+		function( object, 
+				time, 
+				instrument, 
+				price_change, 
+				data_depth, 
+				filter_window, 
+				latency = 0, 
+				av_depth, 
+				spread_sensitivity, 
+				side )
+		{			
+			data <- tick_data[ time ]
 			
-			data_liquidity <- .calc.liquidity(object, data@current_time, instrument,  price_change, data_depth)
+			if ( data@current_time %% 60 != 0 ) stop( "time must multiply by minutes!")
 			
-			filtered_quotes <- .filtering_data( object, 19)
+			data_liquidity <- .calc.liquidity(object, data@current_time, instrument,  price_change, data_depth)		
 			
+			price <- .get_price( data, instrument, latency, av_depth, spread_sensitivity, side )
 			
 		}
 )
+
+

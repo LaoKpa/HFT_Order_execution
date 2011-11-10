@@ -259,8 +259,10 @@ price_triangle <- function( trades, k )
 	return ( invisible ( data[ as.matrix( as.numeric( data[, "time"]) ) >= start_time & as.matrix ( as.numeric( data[, "time"] ) ) < stop_time, ] ) ) 
 }
 
-.get_trades_data_befor_time <- function( object, time, instr )
+.get_trades_data_befor_time <- function( object, time, instr, latency = 0 )
 {
+	time <- time + latency
+	
 	trades <- object@trades[ object@trades[,"ID"] %in% instr, ]	
 	position <- which( time >= as.matrix( as.numeric( trades[ ,"time" ] ) ) )
 	if ( length( position ) == 0)
@@ -269,14 +271,17 @@ price_triangle <- function( trades, k )
 	
 	## Crop unused data
 	trades <- trades[1:position,]	
+	trades <- object@trades[ object@trades[ "price" ] !=  0, ]	
 	
 	trades_numeric <- .data_to_numeric( trades )	
 	
 	return ( invisible ( trades_numeric ))
 }
 
-.get_quotes_data_befor_time <- function( object, time, instr )
+.get_quotes_data_befor_time <- function( object, time, instr, latency = 0 )
 {
+	time <- time + latency
+	
 	quotes <- object@quotes[ object@quotes[,"ID"] %in% instr, ]	
 	position <- which( time >= as.matrix( as.numeric( quotes[ ,"time" ] ) ) )
 	if ( length( position ) == 0)
@@ -284,7 +289,9 @@ price_triangle <- function( trades, k )
 	position <- last( position )
 	
 	## Crop unused data
-	quotes <- quotes[1:position,]	
+	quotes <- quotes[1:position,]	 
+	quotes <- quotes[ quotes[ "ask" ] !=  0 & quotes[ "bid" ] !=  0, ]
+	
 	
 	quotes_numeric <- .data_to_numeric( quotes )	
 	
@@ -292,7 +299,7 @@ price_triangle <- function( trades, k )
 }
 
 .get_data_befor_time <- function( object, time, instr )
-{
+{	
 	current_time <- time
 	seconds_in_a_minute <- 60
 	time <- time + seconds_in_a_minute
@@ -368,3 +375,80 @@ price_triangle <- function( trades, k )
 	return ( invisible ( quotes ) )
 	
 }
+
+.get_price <- function( data, instrument, latency, av_depth, spread_sensitivity, side )
+{	
+	pretrade_quotes <- .get_quotes_data_befor_time( data, data@current_time, instrument, latency )
+	pretrade_trades <- .get_trades_data_befor_time( data, data@current_time, instrument, latency )
+	
+	trade_time <- data@current_time + latency
+	
+	pretrade_filtered_quotes <- .filtering_data( pretrade_quotes, filter_window)
+	average_window <- ( nrow( pretrade_filtered_quotes ) - 24 ):nrow( pretrade_filtered_quotes )
+	average_spread <- mean( pretrade_filtered_quotes[ average_window, "ask"] - pretrade_filtered_quotes[ average_window, "bid"], )	
+	average_bid <- mean( pretrade_filtered_quotes[ average_window, "bid"])
+	average_ask <- mean( pretrade_filtered_quotes[ average_window, "ask"])
+	current_ask <- last( pretrade_quotes["ask"])
+	current_bid <- last( pretrade_quotes["bid"])
+	
+	if ( ( current_ask - current_bid ) > average_spread * spread_sensitivity )
+	{
+		if ( current_ask == average_ask )
+		{
+			ask = average_ask
+			bid = ask - average_spread
+		} else		
+			if ( current_bid == average_bid )
+			{
+				bid = average_bid
+				ask = bid + average_spread
+			} else
+			{
+				last_trade <- last( pretrade_trades["price"])
+				trade_ask <- ask - trade
+				trade_bid <- trade - bid
+				if( trade_ask < trdae_bid)
+				{
+					ask <-  last_trade
+					bid <-  last_trade - average_spread
+				} else
+					if( trade_ask < trade_bid )
+					{
+						bid <- last_trade 
+						ask <- bid + average_spread
+					} else
+					{
+						ask <- last_trade + ( average_spread / 2 )
+						bid <- last_trade - ( average_spread / 2 )
+					}
+			}
+	}
+	
+	cat( "bid = ", bid, "ask = ", ask, "\n")
+	
+	bars_open <- pretrade_trades[ pretrade_trades[ ,"time"] >=  data@current_time & pretrade_trades[ ,"time"] <=  trade_time, ]
+	if ( nrow( bars_open ) == 0 )
+	{
+		bars_open = 0
+		
+	} else
+	{
+		bars_open <- first( bars_open["price"])
+	}
+	
+	if ( side == 1 )
+	{
+		reurn ( bid )
+	} else
+		if ( side == -1)
+		{
+			return ( ask )
+		} else
+		{
+			return ( 0 )
+		}
+}
+
+
+# caculation of minutes start
+#.to.time( 14123 - ( 14123 %% 60 ) )
