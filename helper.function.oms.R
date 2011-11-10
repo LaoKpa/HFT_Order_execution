@@ -271,7 +271,7 @@ price_triangle <- function( trades, k )
 	
 	## Crop unused data
 	trades <- trades[1:position,]	
-	trades <- object@trades[ object@trades[ "price" ] !=  0, ]	
+	trades <- object@trades[ object@trades[ ,"price" ] !=  0, ]	
 	
 	trades_numeric <- .data_to_numeric( trades )	
 	
@@ -290,7 +290,7 @@ price_triangle <- function( trades, k )
 	
 	## Crop unused data
 	quotes <- quotes[1:position,]	 
-	quotes <- quotes[ quotes[ "ask" ] !=  0 & quotes[ "bid" ] !=  0, ]
+	quotes <- quotes[ quotes[ ,"ask" ] !=  0 & quotes[ ,"bid" ] !=  0, ]
 	
 	
 	quotes_numeric <- .data_to_numeric( quotes )	
@@ -376,20 +376,21 @@ price_triangle <- function( trades, k )
 	
 }
 
-.get_price <- function( data, instrument, latency, av_depth, spread_sensitivity, side )
+.get_price <- function( data, instrument, latency, filter_window, av_depth, spread_sensitivity, side )
 {	
 	pretrade_quotes <- .get_quotes_data_befor_time( data, data@current_time, instrument, latency )
 	pretrade_trades <- .get_trades_data_befor_time( data, data@current_time, instrument, latency )
 	
 	trade_time <- data@current_time + latency
 	
-	pretrade_filtered_quotes <- .filtering_data( pretrade_quotes, filter_window)
+	pretrade_filtered_quotes <- .filtering_quotes( pretrade_quotes, filter_window)
+	
 	average_window <- ( nrow( pretrade_filtered_quotes ) - 24 ):nrow( pretrade_filtered_quotes )
 	average_spread <- mean( pretrade_filtered_quotes[ average_window, "ask"] - pretrade_filtered_quotes[ average_window, "bid"], )	
 	average_bid <- mean( pretrade_filtered_quotes[ average_window, "bid"])
 	average_ask <- mean( pretrade_filtered_quotes[ average_window, "ask"])
-	current_ask <- last( pretrade_quotes["ask"])
-	current_bid <- last( pretrade_quotes["bid"])
+	current_ask <- last( pretrade_quotes[,"ask"])
+	current_bid <- last( pretrade_quotes[,"bid"])
 	
 	if ( ( current_ask - current_bid ) > average_spread * spread_sensitivity )
 	{
@@ -438,7 +439,7 @@ price_triangle <- function( trades, k )
 	
 	if ( side == 1 )
 	{
-		reurn ( bid )
+		return ( bid )
 	} else
 		if ( side == -1)
 		{

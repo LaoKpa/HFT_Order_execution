@@ -70,8 +70,10 @@ setMethod("[",
 				x@current_time = .to.ms( i[ 1 ] )
 			}			
 			
+			if ( start_time > stop_time ) stop( "wrong time format!")
 			print( start_time) 
 			print( stop_time )
+			
 			x@trades <- .get_data( x@trades, start_time, stop_time )
 			x@quotes <- .get_data( x@quotes, start_time, stop_time )
 			x@orders<- .get_data( x@orders, start_time, stop_time )

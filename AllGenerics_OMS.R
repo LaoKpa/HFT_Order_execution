@@ -5,6 +5,7 @@
 
 setClass("OMS", representation(
 				tick_data = "CTrade_data"
+				#liquidity_thereshold <- "numeric"
 		),
 )
 

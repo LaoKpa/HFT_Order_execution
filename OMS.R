@@ -4,8 +4,8 @@
 ###############################################################################
 
 setClass("OMS", representation(
-			tick_data = "CTrade_data",
-			liquidity_thereshold <- "numeric"
+			tick_data = "CTrade_data"
+			#liquidity_thereshold <- "numeric"
 		),
 )
 
@@ -20,7 +20,7 @@ setMethod(
 			else
 				stop("Tick_data: wrong class!")			
 			
-			.Object@liquidity_thereshold <- liquidity_thereshold
+			#.Object@liquidity_thereshold <- as.numeric( liquidity_thereshold )
 			return ( invisible (.Object))			
 		}
 )
@@ -38,14 +38,15 @@ setMethod( "make_trade",
 				spread_sensitivity, 
 				side )
 		{			
-			data <- tick_data[ time ]
+			data <- object@tick_data[ time ]
 			
 			if ( data@current_time %% 60 != 0 ) stop( "time must multiply by minutes!")
 			
-			data_liquidity <- .calc.liquidity(object, data@current_time, instrument,  price_change, data_depth)		
+			data_liquidity <- .calc.liquidity( data, data@current_time, instrument,  price_change, data_depth)		
 			
-			price <- .get_price( data, instrument, latency, av_depth, spread_sensitivity, side )
+			price <- .get_price( data, instrument, latency, filter_window, av_depth, spread_sensitivity, side )
 			
+			return ( price )
 		}
 )
 
