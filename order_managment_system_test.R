@@ -3,7 +3,10 @@
 # Author: Marozau
 ###############################################################################
 
-path = "E://Projects//DB//dfast_trader_1.log"
+#path = "E://Projects//DB//dfast_trader_1.log"
+
+path = "D://DB//Quotes//dfast_trader_1.log"
+
 
 tickdata <- data.fun( path ) 
 
@@ -17,7 +20,7 @@ therashold <- 100000
 
 oms <- new(Class = "OMS", tick_data = tickdata)
 
-ins <- "IWF"
+ins <- "QQQ"
 make_trade( object = oms,
 		time = "13:50:00",
 		instrument = ins, 
@@ -29,4 +32,5 @@ make_trade( object = oms,
 		spread_sensitivity = 4, 
 		side = 1)
 
+data <- oms@tick_data[ "13:50:00" ]
 .plot( data, instrument = ins)

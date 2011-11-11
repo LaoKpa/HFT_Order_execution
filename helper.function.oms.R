@@ -394,7 +394,7 @@ price_triangle <- function( trades, k )
 
 	if ( current_ask == average_ask )
 	{
-		ask = average_ask
+		ask = current_ask
 		bid = ask - round( average_spread, 2 )
 	} else		
 		if ( current_bid == average_bid )
@@ -415,7 +415,7 @@ price_triangle <- function( trades, k )
 				ask <-  last_trade
 				bid <-  last_trade - round( average_spread )
 			} else
-				if( trade_ask < trade_bid )
+				if( trade_ask > trade_bid )
 				{
 					bid <- last_trade 
 					ask <- bid + round( average_spread )
