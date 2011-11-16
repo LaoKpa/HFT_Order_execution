@@ -385,60 +385,67 @@ price_triangle <- function( trades, k )
 	average_ask <- mean( data_to_average[ , "ask"])
 	current_ask <- last( data_to_average[,"ask"])
 	current_bid <- last( data_to_average[,"bid"])
+	current_real_ask <- last( pretrade_quotes[,"ask"])
+	current_real_bid <- last( pretrade_quotes[,"bid"])	
 	
 	cat( "average_spread: =" , average_spread, "\n")
 	cat( "average_bid: =", average_bid, "\n")
 	cat( "current bid: =" , current_bid, "\n")
 	cat( "average_ask: =", average_ask, "\n")
 	cat( "current ask: =", current_ask, "\n")	
-
-	if ( current_ask == average_ask )
+	
+	if ( round( average_spread, 2 ) < ( current_ask - current_bid ) && round( average_spread, 2 ) > 0)
 	{
-		ask = current_ask
-		bid = ask - round( average_spread, 2 )
-	} else		
-		if ( current_bid == average_bid )
+		if ( abs( current_ask - average_ask ) < 0.001 )
 		{
-			bid = current_bid
-			ask = bid + round( average_spread, 2 )
-		} else
-		{
-			current_real_ask <- last( pretrade_quotes[,"ask"])
-			current_real_bid <- last( pretrade_quotes[,"bid"])	
-			
-			last_trade <- last( pretrade_trades[,"price"])
-			
-			trade_ask <- current_real_ask - last_trade
-			trade_bid <- last_trade - current_real_bid
-			if( trade_ask < trade_bid )
+			ask = current_ask
+			bid = ask - round( average_spread, 2 )		
+		} else		
+			if ( abs( current_bid - average_bid ) < 0.001 )
 			{
-				ask <-  last_trade
-				bid <-  last_trade - round( average_spread )
+				bid = current_bid
+				ask = bid + round( average_spread, 2 )
 			} else
-				if( trade_ask > trade_bid )
+				if( abs( current_real_bid - average_bid ) < 0.001 )
 				{
-					bid <- last_trade 
-					ask <- bid + round( average_spread )
+					bid = current_real_bid
+					ask = bid + round( average_spread, 2 )
 				} else
-				{
-					ask <- last_trade + ( round( average_spread, 2 ) / 2 )
-					bid <- last_trade - ( round( average_spread, 2 ) / 2 )
-				}
-	}
-
-	
-	cat( "bid = ", bid, "ask = ", ask, "\n")
-	
-	bars_open <- pretrade_trades[ pretrade_trades[ ,"time"] >=  data@current_time & pretrade_trades[ ,"time"] <=  trade_time, ]
-	if ( nrow( bars_open ) == 0 )
-	{
-		bars_open = 0
-		
+					if ( abs( current_real_ask - average_ask ) < 0.001 )
+					{
+						ask = current_real_ask
+						bid = ask - round( average_spread, 2 )
+					} else
+					{			
+						last_trade <- last( pretrade_trades[,"price"])
+						
+						trade_ask <- current_ask - last_trade
+						trade_bid <- last_trade - current_bid
+						if( trade_ask > 0 & trade_bid > 0 )
+						{
+							ask <-  current_ask
+							bid <-  current_bid
+						} else
+							if( trade_bid < 0 )
+							{
+								bid <- last_trade 
+								ask <- bid + round( average_spread, 2 )
+							} else
+							 	if ( trade_ask < 0) 
+								{
+									ask <- last_trade 
+									bid <- ask - round( average_spread, 2 )
+								}
+					}
 	} else
 	{
-		bars_open <- first( bars_open["price"])
+		ask <- current_ask
+		bid <- current_bid
 	}
 	
+	
+	cat( "bid = ", bid, "ask = ", ask, "\n")
+
 	if ( side == 1 )
 	{
 		return ( bid )
@@ -455,3 +462,20 @@ price_triangle <- function( trades, k )
 
 # caculation of minutes start
 #.to.time( 14123 - ( 14123 %% 60 ) )
+
+.market_status <- function( data, instrument )
+{
+	
+}
+
+
+bars_open <- pretrade_trades[ pretrade_trades[ ,"time"] >=  data@current_time & pretrade_trades[ ,"time"] <=  trade_time, ]
+if ( nrow( bars_open ) == 0 )
+{
+	bars_open = 0
+	
+} else
+{
+	bars_open <- first( bars_open["price"])
+}
+
