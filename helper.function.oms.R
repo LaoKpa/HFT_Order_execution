@@ -463,8 +463,12 @@ price_triangle <- function( trades, k )
 # caculation of minutes start
 #.to.time( 14123 - ( 14123 %% 60 ) )
 
-.market_status <- function( data, instrument )
+.market_status <- function( data, instrument, latency )
 {
+	pretrade_trades <- .get_trades_data_befor_time( data, data@current_time, instrument, latency )
+	
+	trade_time <- data@current_time + latency
+	
 	
 }
 
